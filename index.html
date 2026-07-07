@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinning Prize Wheel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Pastel starfield background -->
+    <div class="bg-stars" aria-hidden="true"></div>
+
+    <!-- Pastel wave layers at bottom -->
+    <div class="bg-waves" aria-hidden="true">
+        <svg class="wave wave-1" viewBox="0 0 1440 180" preserveAspectRatio="none">
+            <path d="M0,80 C360,160 1080,0 1440,80 L1440,180 L0,180 Z" fill="rgba(200,180,240,0.25)"/>
+        </svg>
+        <svg class="wave wave-2" viewBox="0 0 1440 180" preserveAspectRatio="none">
+            <path d="M0,100 C320,40 720,160 1440,60 L1440,180 L0,180 Z" fill="rgba(168,230,207,0.2)"/>
+        </svg>
+        <svg class="wave wave-3" viewBox="0 0 1440 180" preserveAspectRatio="none">
+            <path d="M0,120 C480,180 960,60 1440,120 L1440,180 L0,180 Z" fill="rgba(244,168,200,0.18)"/>
+        </svg>
+    </div>
+
+    <main class="app-container">
+        <h1 class="app-title">✨ Prize Wheel ✨</h1>
+
+        <!-- Wheel container -->
+        <div class="wheel-wrapper">
+            <div class="wheel-glow" aria-hidden="true"></div>
+            <div class="pointer" aria-hidden="true"></div>
+            <canvas id="wheelCanvas" width="520" height="520" role="img" aria-label="Prize wheel"></canvas>
+            <button class="spin-btn" id="spinBtn" aria-label="Spin the wheel">SPIN</button>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="emptyState">
+            <p>Add segments to get started! 🎨</p>
+            <p class="empty-hint">Tap the edit button below</p>
+        </div>
+
+        <!-- All segments eliminated -->
+        <div class="reset-state" id="resetState" style="display:none;">
+            <p>All segments have been used! 🎉</p>
+            <button class="reset-btn" id="resetBtn">Reset Wheel</button>
+        </div>
+
+        <!-- Edit FAB -->
+        <button class="fab-edit" id="editBtn" aria-label="Edit segments">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+        </button>
+    </main>
+
+    <!-- Winner display -->
+    <div class="winner-overlay" id="winnerOverlay" style="display:none;" role="alert" aria-live="assertive">
+        <div class="winner-card">
+            <div class="winner-emoji">🎊</div>
+            <h2 class="winner-title">Winner!</h2>
+            <p class="winner-name" id="winnerName"></p>
+            <button class="winner-dismiss" id="winnerDismiss">Awesome!</button>
+        </div>
+    </div>
+
+    <!-- Confetti canvas -->
+    <canvas id="confettiCanvas" aria-hidden="true"></canvas>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Edit Wheel</h2>
+                <button class="modal-close" id="modalClose" aria-label="Close modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Settings section -->
+                <div class="settings-section">
+                    <h3>Settings</h3>
+                    <div class="setting-row">
+                        <label for="weightedToggle">
+                            <span class="setting-label">Weighted Mode</span>
+                            <span class="setting-desc">Use custom percentages for each segment</span>
+                        </label>
+                        <input type="checkbox" id="weightedToggle" class="toggle-input" checked>
+                        <label for="weightedToggle" class="toggle-switch" aria-hidden="true"></label>
+                    </div>
+                    <div class="setting-row">
+                        <label for="removeToggle">
+                            <span class="setting-label">Remove Winner</span>
+                            <span class="setting-desc">Winner is removed after each spin (raffle mode)</span>
+                        </label>
+                        <input type="checkbox" id="removeToggle" class="toggle-input">
+                        <label for="removeToggle" class="toggle-switch" aria-hidden="true"></label>
+                    </div>
+                </div>
+
+                <!-- Segments section -->
+                <div class="segments-section">
+                    <h3>Segments</h3>
+                    <div class="total-bar">
+                        <span>Total Weight:</span>
+                        <span class="total-value" id="totalWeight">0%</span>
+                    </div>
+                    <div class="segments-list" id="segmentsList"></div>
+                    <button class="add-segment-btn" id="addSegmentBtn">+ Add Segment</button>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <span class="validation-msg" id="validationMsg"></span>
+                <button class="save-btn" id="saveBtn">Save & Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/weighted.js"></script>
+    <script src="js/confetti.js"></script>
+    <script src="js/wheel.js"></script>
+    <script src="js/editor.js"></script>
+</body>
+</html>
