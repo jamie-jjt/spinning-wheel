@@ -8,10 +8,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/chibi.css">
 </head>
 <body>
     <!-- Pastel starfield background -->
     <div class="bg-stars" aria-hidden="true"></div>
+
+    <!-- Floating pastel shapes background -->
+    <div class="bg-shapes" aria-hidden="true">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+        <div class="shape shape-6"></div>
+    </div>
 
     <!-- Pastel wave layers at bottom -->
     <div class="bg-waves" aria-hidden="true">
@@ -33,7 +44,7 @@
         <div class="wheel-wrapper">
             <div class="wheel-glow" aria-hidden="true"></div>
             <div class="pointer" aria-hidden="true"></div>
-            <canvas id="wheelCanvas" width="520" height="520" role="img" aria-label="Prize wheel"></canvas>
+            <canvas id="wheelCanvas" width="680" height="680" role="img" aria-label="Prize wheel"></canvas>
             <button class="spin-btn" id="spinBtn" aria-label="Spin the wheel">SPIN</button>
         </div>
 
@@ -61,9 +72,11 @@
     <!-- Winner display -->
     <div class="winner-overlay" id="winnerOverlay" style="display:none;" role="alert" aria-live="assertive">
         <div class="winner-card">
-            <div class="winner-emoji">🎊</div>
-            <h2 class="winner-title">Winner!</h2>
+            <div class="winner-emoji" id="winnerEmoji">🎊</div>
+            <img class="winner-quby-gif" id="winnerQubyGif" src="" alt="Quby celebration" style="display:none;">
+            <h2 class="winner-title" id="winnerTitle">Winner!</h2>
             <p class="winner-name" id="winnerName"></p>
+            <p class="winner-message" id="winnerMessage"></p>
             <button class="winner-dismiss" id="winnerDismiss">Awesome!</button>
         </div>
     </div>
@@ -99,6 +112,14 @@
                         <input type="checkbox" id="removeToggle" class="toggle-input">
                         <label for="removeToggle" class="toggle-switch" aria-hidden="true"></label>
                     </div>
+                    <div class="setting-row">
+                        <label for="winLoseToggle">
+                            <span class="setting-label">Win/Lose Mode</span>
+                            <span class="setting-desc">Mark each segment as a win or lose outcome</span>
+                        </label>
+                        <input type="checkbox" id="winLoseToggle" class="toggle-input">
+                        <label for="winLoseToggle" class="toggle-switch" aria-hidden="true"></label>
+                    </div>
                 </div>
 
                 <!-- Segments section -->
@@ -125,5 +146,6 @@
     <script src="js/confetti.js"></script>
     <script src="js/wheel.js"></script>
     <script src="js/editor.js"></script>
+    <script src="js/chibi.js"></script>
 </body>
 </html>

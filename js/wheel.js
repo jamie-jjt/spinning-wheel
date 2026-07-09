@@ -48,7 +48,7 @@ const Wheel = (() => {
 
     function handleResize() {
         const container = canvas.parentElement;
-        const size = Math.min(container.clientWidth, 520);
+        const size = Math.min(container.clientWidth, 680);
         const dpr = window.devicePixelRatio || 1;
         canvas.width = size * dpr;
         canvas.height = size * dpr;

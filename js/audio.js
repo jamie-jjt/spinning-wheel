@@ -96,11 +96,49 @@ const AudioEngine = (() => {
     }
 
     /**
+     * Play a gentle chime for a "lose" outcome.
+     * Soft triangle wave with a descending minor third (E5 → C5).
+     * Warm and acknowledging — not sad or harsh.
+     */
+    function playGentleChime() {
+        try {
+            const ac = getContext();
+            const now = ac.currentTime;
+
+            // Descending minor third: E5 → C5
+            const notes = [659.25, 523.25];
+            const duration = 0.6;
+
+            notes.forEach((freq, i) => {
+                const osc = ac.createOscillator();
+                const gain = ac.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + i * 0.25);
+
+                const startTime = now + i * 0.25;
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.08, startTime + 0.04);
+                gain.gain.setValueAtTime(0.08, startTime + duration * 0.4);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ac.destination);
+
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            });
+        } catch (e) {
+            // Silently fail
+        }
+    }
+
+    /**
      * Ensure audio context is ready (call on first user interaction).
      */
     function init() {
         getContext();
     }
 
-    return { playTick, playFanfare, init };
+    return { playTick, playFanfare, playGentleChime, init };
 })();

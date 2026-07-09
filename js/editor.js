@@ -16,19 +16,25 @@ const App = (() => {
     const totalWeightEl = document.getElementById('totalWeight');
     const weightedToggle = document.getElementById('weightedToggle');
     const removeToggle = document.getElementById('removeToggle');
+    const winLoseToggle = document.getElementById('winLoseToggle');
     const emptyState = document.getElementById('emptyState');
     const resetState = document.getElementById('resetState');
     const resetBtn = document.getElementById('resetBtn');
     const winnerOverlay = document.getElementById('winnerOverlay');
+    const winnerEmoji = document.getElementById('winnerEmoji');
+    const winnerQubyGif = document.getElementById('winnerQubyGif');
+    const winnerTitle = document.getElementById('winnerTitle');
     const winnerName = document.getElementById('winnerName');
+    const winnerMessage = document.getElementById('winnerMessage');
     const winnerDismiss = document.getElementById('winnerDismiss');
 
     // App state
-    let segments = []; // Current active segments { title, weight }
+    let segments = []; // Current active segments { title, weight, outcome? }
     let originalSegments = []; // Original saved segments (for reset)
     let settings = {
         weighted: true,
         removeWinner: false,
+        winLoseMode: false,
     };
 
     // Editor temp state
@@ -42,6 +48,23 @@ const App = (() => {
         '#E2B4F0', '#FFDAC1', '#98D8E8', '#F4C2C2', '#C1E1C1',
         '#D4A5E5', '#FFF3B0', '#B4D7E8', '#F0B8D0', '#C8E8B0', '#E8C8D8',
     ];
+
+    // Win/Lose display config
+    const WIN_CONFIG = {
+        emoji: '🎊',
+        title: 'Congratulations!',
+        gif: 'https://media.tenor.com/oQ_6wxtMrx0AAAAj/pentol-quby.gif',
+        messages: ["You're amazing!", "What a lucky spin!", "You did it!", "Winner winner!"],
+        dismissText: 'Awesome! 🎉',
+    };
+
+    const LOSE_CONFIG = {
+        emoji: '💫',
+        title: 'Better luck next time!',
+        gif: 'https://media.tenor.com/hqXIMauJdRMAAAAj/quby-pentol.gif',
+        messages: ["Thanks for playing!", "Don't give up!", "Almost had it!", "Next time for sure!"],
+        dismissText: 'Try again! 💪',
+    };
 
     /**
      * Initialize the application.
@@ -63,6 +86,7 @@ const App = (() => {
         addSegmentBtn.addEventListener('click', addEditorSegment);
         saveBtn.addEventListener('click', handleSave);
         weightedToggle.addEventListener('change', updateEditorUI);
+        winLoseToggle.addEventListener('change', updateEditorUI);
         resetBtn.addEventListener('click', handleReset);
         winnerDismiss.addEventListener('click', dismissWinner);
         winnerOverlay.addEventListener('click', (e) => {
@@ -101,9 +125,18 @@ const App = (() => {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
                 const data = JSON.parse(raw);
-                segments = data.segments || [];
-                originalSegments = data.originalSegments || [];
-                settings = { ...settings, ...data.settings };
+                // Backward compatible: ensure outcome field defaults to 'win'
+                segments = (data.segments || []).map(s => ({
+                    title: s.title,
+                    weight: s.weight,
+                    outcome: s.outcome || 'win',
+                }));
+                originalSegments = (data.originalSegments || []).map(s => ({
+                    title: s.title,
+                    weight: s.weight,
+                    outcome: s.outcome || 'win',
+                }));
+                settings = { weighted: true, removeWinner: false, winLoseMode: false, ...data.settings };
             }
         } catch (e) {
             // Storage unavailable or corrupted
@@ -145,9 +178,17 @@ const App = (() => {
         Wheel.spin(winnerIndex, () => {
             // Spin complete
             const winner = segments[winnerIndex];
-            showWinner(winner.title);
-            AudioEngine.playFanfare();
-            Confetti.launch(150);
+            const outcome = settings.winLoseMode ? (winner.outcome || 'win') : 'win';
+
+            showWinner(winner.title, outcome);
+
+            if (outcome === 'win') {
+                AudioEngine.playFanfare();
+                Confetti.launch(150);
+            } else {
+                AudioEngine.playGentleChime();
+                // No confetti for lose
+            }
 
             // Remove winner if setting is on
             if (settings.removeWinner) {
@@ -165,25 +206,43 @@ const App = (() => {
 
     // ===== WINNER DISPLAY =====
 
-    function showWinner(name) {
+    function showWinner(name, outcome) {
+        const config = outcome === 'lose' ? LOSE_CONFIG : WIN_CONFIG;
+        const randomMsg = config.messages[Math.floor(Math.random() * config.messages.length)];
+
+        // Update overlay content
+        winnerEmoji.textContent = config.emoji;
+        winnerTitle.textContent = config.title;
         winnerName.textContent = name;
+        winnerMessage.textContent = randomMsg;
+        winnerMessage.style.display = 'block';
+        winnerDismiss.textContent = config.dismissText;
+
+        // Quby GIF
+        winnerQubyGif.src = config.gif;
+        winnerQubyGif.style.display = 'block';
+
+        // Apply lose class modifier for different background tint
+        if (outcome === 'lose') {
+            winnerOverlay.classList.add('lose');
+        } else {
+            winnerOverlay.classList.remove('lose');
+        }
+
         winnerOverlay.style.display = 'flex';
         // Trigger reflow for animation
         void winnerOverlay.offsetWidth;
         winnerOverlay.classList.add('active');
-
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => {
-            if (winnerOverlay.classList.contains('active')) {
-                dismissWinner();
-            }
-        }, 5000);
     }
 
     function dismissWinner() {
         winnerOverlay.classList.remove('active');
         setTimeout(() => {
             winnerOverlay.style.display = 'none';
+            winnerOverlay.classList.remove('lose');
+            winnerQubyGif.style.display = 'none';
+            winnerQubyGif.src = '';
+            winnerMessage.style.display = 'none';
             // Update display after removing winner
             updateWheelDisplay();
         }, 300);
@@ -204,6 +263,7 @@ const App = (() => {
         editorSegments = segments.map(s => ({ ...s }));
         weightedToggle.checked = settings.weighted;
         removeToggle.checked = settings.removeWinner;
+        winLoseToggle.checked = settings.winLoseMode;
 
         renderEditorSegments();
         updateTotalWeight();
@@ -225,7 +285,7 @@ const App = (() => {
     }
 
     function addEditorSegment() {
-        editorSegments.push({ title: '', weight: 0 });
+        editorSegments.push({ title: '', weight: 0, outcome: 'win' });
         renderEditorSegments();
         updateTotalWeight();
 
@@ -285,6 +345,32 @@ const App = (() => {
 
             item.appendChild(colorDot);
             item.appendChild(titleInput);
+
+            // Outcome dropdown (win/lose mode)
+            if (winLoseToggle.checked) {
+                const outcomeSelect = document.createElement('select');
+                outcomeSelect.className = 'outcome-select';
+                outcomeSelect.setAttribute('aria-label', `Segment ${i + 1} outcome`);
+
+                const winOption = document.createElement('option');
+                winOption.value = 'win';
+                winOption.textContent = 'Win 🏆';
+
+                const loseOption = document.createElement('option');
+                loseOption.value = 'lose';
+                loseOption.textContent = 'Lose 💫';
+
+                outcomeSelect.appendChild(winOption);
+                outcomeSelect.appendChild(loseOption);
+                outcomeSelect.value = seg.outcome || 'win';
+
+                outcomeSelect.addEventListener('change', (e) => {
+                    editorSegments[i].outcome = e.target.value;
+                });
+
+                item.appendChild(outcomeSelect);
+            }
+
             if (weightedToggle.checked) {
                 item.appendChild(weightInput);
             }
@@ -342,13 +428,21 @@ const App = (() => {
         }
 
         // Save
-        segments = editorSegments.map(s => ({
-            title: s.title.trim(),
-            weight: s.weight,
-        }));
+        const isWinLose = winLoseToggle.checked;
+        segments = editorSegments.map(s => {
+            const seg = {
+                title: s.title.trim(),
+                weight: s.weight,
+            };
+            if (isWinLose) {
+                seg.outcome = s.outcome || 'win';
+            }
+            return seg;
+        });
         originalSegments = JSON.parse(JSON.stringify(segments));
         settings.weighted = weightedToggle.checked;
         settings.removeWinner = removeToggle.checked;
+        settings.winLoseMode = winLoseToggle.checked;
 
         saveToStorage();
         updateWheelDisplay();
