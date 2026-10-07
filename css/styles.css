@@ -226,6 +226,52 @@ body {
     100% { transform: translateX(10px); }
 }
 
+/* ===== THEMED DECORATIONS =====
+   The star/wave layers and two of the floating shapes use hardcoded pastel
+   colors that don't follow the CSS vars. Keep the default (pastel) theme
+   exactly as-is, and tone the decorations down for the other themes so bright
+   pastel stars never glare on a dark background. Shapes 4 & 5 are retinted to
+   theme colors; the rest already use --primary/--secondary/--success. */
+
+/* Dark themes: dim and soften the twinkling stars, dim the waves. */
+[data-theme="midnight"] .bg-stars::before,
+[data-theme="midnight"] .bg-stars::after,
+[data-theme="neon"] .bg-stars::before,
+[data-theme="neon"] .bg-stars::after {
+    opacity: 0.5;
+    mix-blend-mode: screen;
+}
+
+[data-theme="midnight"] .bg-waves,
+[data-theme="neon"] .bg-waves {
+    opacity: 0.4;
+}
+
+/* Light non-pastel themes: slightly soften decorations so pastel stars don't
+   clash with the new palette, without hiding them. */
+[data-theme="ocean"] .bg-stars,
+[data-theme="sunset"] .bg-stars,
+[data-theme="forest"] .bg-stars {
+    opacity: 0.7;
+}
+
+/* Retint the two hardcoded floating shapes to follow the theme. */
+[data-theme="midnight"] .shape-4,
+[data-theme="neon"] .shape-4,
+[data-theme="ocean"] .shape-4,
+[data-theme="sunset"] .shape-4,
+[data-theme="forest"] .shape-4 {
+    background: var(--secondary);
+}
+
+[data-theme="midnight"] .shape-5,
+[data-theme="neon"] .shape-5,
+[data-theme="ocean"] .shape-5,
+[data-theme="sunset"] .shape-5,
+[data-theme="forest"] .shape-5 {
+    background: var(--success);
+}
+
 /* ===== APP CONTAINER ===== */
 .app-container {
     position: relative;
@@ -419,6 +465,71 @@ body {
     transform: scale(0.95);
 }
 
+/* ===== FULLSCREEN / FOCUSED VIEW ===== */
+/* Discreet top-right toggle that enters a focused wheel view. */
+.fullscreen-btn {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(6px);
+    color: var(--text-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px var(--shadow);
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    z-index: 100;
+}
+
+.fullscreen-btn:hover {
+    transform: scale(1.08);
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--text);
+    box-shadow: 0 4px 16px var(--shadow-strong);
+}
+
+.fullscreen-btn:active {
+    transform: scale(0.95);
+}
+
+/* Swap expand/collapse icon based on state */
+.fullscreen-btn .fs-icon-collapse {
+    display: none;
+}
+
+body.wheel-focus .fullscreen-btn .fs-icon-expand {
+    display: none;
+}
+
+body.wheel-focus .fullscreen-btn .fs-icon-collapse {
+    display: block;
+}
+
+/* Focused view: hide the lower-right settings FAB per the request */
+body.wheel-focus .fab-edit {
+    display: none;
+}
+
+/* Dim surrounding chrome a touch for focus, keep wheel + controls prominent */
+body.wheel-focus .app-title {
+    opacity: 0.35;
+    transition: opacity 0.3s ease;
+}
+
+/* Let the wheel grow beyond the normal 680 cap when focused.
+   JS raises Wheel.setMaxSize so the canvas re-renders crisply;
+   this just allows the wrapper to use the extra width. */
+body.wheel-focus .wheel-wrapper {
+    max-width: min(90vh, 900px);
+    width: 100%;
+}
+
 /* ===== MODAL ===== */
 .modal-overlay {
     position: fixed;
@@ -569,6 +680,28 @@ body {
     font-size: 0.8rem;
     color: var(--text-light);
     margin-top: 2px;
+}
+
+/* Theme picker select — matches the modal field styling */
+.theme-select {
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-pill);
+    outline: none;
+    color: var(--text);
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    flex-shrink: 0;
+    margin-left: 12px;
+    min-width: 150px;
+}
+
+.theme-select:focus {
+    border-color: var(--secondary);
 }
 
 /* Toggle switch */

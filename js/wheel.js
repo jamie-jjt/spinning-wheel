@@ -8,6 +8,7 @@ const Wheel = (() => {
     let currentRotation = 0; // Current rotation angle in radians
     let isSpinning = false;
     let animationId = null;
+    let maxSize = 680; // Max rendered wheel size in px (configurable for focused view)
 
     // Spin animation state
     let spinStartTime = 0;
@@ -19,7 +20,9 @@ const Wheel = (() => {
     // Callback when spin completes
     let onSpinComplete = null;
 
-    // Pastel palette for segments (cycles if more segments than colors)
+    // Pastel palette for segments (cycles if more segments than colors).
+    // Used as a fallback when the Themes module isn't loaded; otherwise the
+    // active theme's palette is read at render time via getPalette().
     const PASTEL_COLORS = [
         '#FFB3C6', // pink
         '#C8B8E8', // lavender
@@ -39,6 +42,24 @@ const Wheel = (() => {
         '#E8C8D8', // mauve
     ];
 
+    // Read the active theme's segment palette at render time, falling back to
+    // the pastel array if Themes isn't available (keeps the file standalone).
+    function getPalette() {
+        if (typeof Themes !== 'undefined' && Themes.getSegmentColors) {
+            const colors = Themes.getSegmentColors();
+            if (colors && colors.length) return colors;
+        }
+        return PASTEL_COLORS;
+    }
+
+    // Theme-aware label color; falls back to the original pastel text color.
+    function getLabelColor() {
+        if (typeof Themes !== 'undefined' && Themes.getLabelColor) {
+            return Themes.getLabelColor();
+        }
+        return '#4a3f5c';
+    }
+
     function init() {
         canvas = document.getElementById('wheelCanvas');
         ctx = canvas.getContext('2d');
@@ -48,7 +69,7 @@ const Wheel = (() => {
 
     function handleResize() {
         const container = canvas.parentElement;
-        const size = Math.min(container.clientWidth, 680);
+        const size = Math.min(container.clientWidth, maxSize);
         const dpr = window.devicePixelRatio || 1;
         canvas.width = size * dpr;
         canvas.height = size * dpr;
@@ -92,6 +113,7 @@ const Wheel = (() => {
         }
 
         const segmentAngle = (2 * Math.PI) / segments.length;
+        const palette = getPalette();
 
         segments.forEach((segment, i) => {
             const startAngle = currentRotation + i * segmentAngle - Math.PI / 2;
@@ -103,7 +125,7 @@ const Wheel = (() => {
             ctx.arc(centerX, centerY, radius, startAngle, endAngle);
             ctx.closePath();
 
-            ctx.fillStyle = PASTEL_COLORS[i % PASTEL_COLORS.length];
+            ctx.fillStyle = palette[i % palette.length];
             ctx.fill();
 
             // Draw segment border
@@ -167,7 +189,7 @@ const Wheel = (() => {
         const displayText = text.length > maxLen ? text.substring(0, maxLen) + '…' : text;
 
         ctx.font = `700 ${fontSize}px Nunito, sans-serif`;
-        ctx.fillStyle = '#4a3f5c';
+        ctx.fillStyle = getLabelColor();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -299,5 +321,15 @@ const Wheel = (() => {
         return isSpinning;
     }
 
-    return { init, setSegments, getSegments, render, spin, getIsSpinning, handleResize };
+    /**
+     * Update the max rendered wheel size (px) and re-fit the canvas.
+     * Defaults to 680 so normal view is unchanged.
+     * @param {number} px
+     */
+    function setMaxSize(px) {
+        maxSize = px;
+        handleResize();
+    }
+
+    return { init, setSegments, getSegments, render, spin, getIsSpinning, handleResize, setMaxSize };
 })();

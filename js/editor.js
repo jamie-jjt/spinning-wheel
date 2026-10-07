@@ -17,6 +17,7 @@ const App = (() => {
     const weightedToggle = document.getElementById('weightedToggle');
     const removeToggle = document.getElementById('removeToggle');
     const winLoseToggle = document.getElementById('winLoseToggle');
+    const themeSelect = document.getElementById('themeSelect');
     const emptyState = document.getElementById('emptyState');
     const resetState = document.getElementById('resetState');
     const resetBtn = document.getElementById('resetBtn');
@@ -35,6 +36,7 @@ const App = (() => {
         weighted: true,
         removeWinner: false,
         winLoseMode: false,
+        theme: 'pastel',
     };
 
     // Editor temp state
@@ -42,12 +44,23 @@ const App = (() => {
 
     const STORAGE_KEY = 'spinning-wheel-data';
 
-    // Pastel colors for segment preview dots
+    // Pastel colors for segment preview dots — fallback used when the Themes
+    // module isn't loaded; otherwise the active theme's palette is read.
     const PREVIEW_COLORS = [
         '#FFB3C6', '#C8B8E8', '#A8E6CF', '#FFD6A5', '#B5EAD7',
         '#E2B4F0', '#FFDAC1', '#98D8E8', '#F4C2C2', '#C1E1C1',
         '#D4A5E5', '#FFF3B0', '#B4D7E8', '#F0B8D0', '#C8E8B0', '#E8C8D8',
     ];
+
+    // Read the active theme's palette for the editor color dots, falling back
+    // to the pastel preview colors if Themes isn't available.
+    function getPreviewColors() {
+        if (typeof Themes !== 'undefined' && Themes.getSegmentColors) {
+            const colors = Themes.getSegmentColors();
+            if (colors && colors.length) return colors;
+        }
+        return PREVIEW_COLORS;
+    }
 
     // Win/Lose display config
     const WIN_CONFIG = {
@@ -71,9 +84,35 @@ const App = (() => {
      */
     function init() {
         loadFromStorage();
+        populateThemeSelect();
+        // Apply the saved theme before the first render so there is no flash
+        // of the wrong theme on reload for non-pastel saved themes.
+        if (typeof Themes !== 'undefined' && Themes.apply) {
+            Themes.apply(settings.theme);
+        }
         Wheel.init();
         updateWheelDisplay();
         bindEvents();
+    }
+
+    function populateThemeSelect() {
+        if (!themeSelect || typeof Themes === 'undefined' || !Themes.getAll) return;
+        themeSelect.innerHTML = '';
+        Themes.getAll().forEach(({ id, label }) => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = label;
+            themeSelect.appendChild(opt);
+        });
+        themeSelect.value = settings.theme;
+    }
+
+    // Called by Themes.apply() so the editor color dots refresh live when the
+    // modal is open and the theme changes.
+    function refreshThemePreview() {
+        if (modalOverlay && modalOverlay.style.display !== 'none') {
+            renderEditorSegments();
+        }
     }
 
     function bindEvents() {
@@ -87,6 +126,14 @@ const App = (() => {
         saveBtn.addEventListener('click', handleSave);
         weightedToggle.addEventListener('change', updateEditorUI);
         winLoseToggle.addEventListener('change', updateEditorUI);
+        if (themeSelect) {
+            // Live preview while the modal is open; reverted on cancel/close.
+            themeSelect.addEventListener('change', () => {
+                if (typeof Themes !== 'undefined' && Themes.apply) {
+                    Themes.apply(themeSelect.value);
+                }
+            });
+        }
         resetBtn.addEventListener('click', handleReset);
         winnerDismiss.addEventListener('click', dismissWinner);
         winnerOverlay.addEventListener('click', (e) => {
@@ -136,7 +183,7 @@ const App = (() => {
                     weight: s.weight,
                     outcome: s.outcome || 'win',
                 }));
-                settings = { weighted: true, removeWinner: false, winLoseMode: false, ...data.settings };
+                settings = { weighted: true, removeWinner: false, winLoseMode: false, theme: 'pastel', ...data.settings };
             }
         } catch (e) {
             // Storage unavailable or corrupted
@@ -264,6 +311,7 @@ const App = (() => {
         weightedToggle.checked = settings.weighted;
         removeToggle.checked = settings.removeWinner;
         winLoseToggle.checked = settings.winLoseMode;
+        if (themeSelect) themeSelect.value = settings.theme;
 
         renderEditorSegments();
         updateTotalWeight();
@@ -278,6 +326,12 @@ const App = (() => {
     }
 
     function closeModal() {
+        // Revert any live theme preview back to the saved theme (cancel path).
+        if (themeSelect && themeSelect.value !== settings.theme &&
+            typeof Themes !== 'undefined' && Themes.apply) {
+            Themes.apply(settings.theme);
+            themeSelect.value = settings.theme;
+        }
         modalOverlay.classList.remove('active');
         setTimeout(() => {
             modalOverlay.style.display = 'none';
@@ -306,13 +360,15 @@ const App = (() => {
     function renderEditorSegments() {
         segmentsList.innerHTML = '';
 
+        const previewColors = getPreviewColors();
+
         editorSegments.forEach((seg, i) => {
             const item = document.createElement('div');
             item.className = 'segment-item';
 
             const colorDot = document.createElement('div');
             colorDot.className = 'segment-color';
-            colorDot.style.backgroundColor = PREVIEW_COLORS[i % PREVIEW_COLORS.length];
+            colorDot.style.backgroundColor = previewColors[i % previewColors.length];
 
             const titleInput = document.createElement('input');
             titleInput.type = 'text';
@@ -443,6 +499,12 @@ const App = (() => {
         settings.weighted = weightedToggle.checked;
         settings.removeWinner = removeToggle.checked;
         settings.winLoseMode = winLoseToggle.checked;
+        if (themeSelect) settings.theme = themeSelect.value;
+
+        // Apply the chosen theme (updates CSS vars + canvas palette).
+        if (typeof Themes !== 'undefined' && Themes.apply) {
+            Themes.apply(settings.theme);
+        }
 
         saveToStorage();
         updateWheelDisplay();
@@ -457,5 +519,5 @@ const App = (() => {
         init();
     }
 
-    return { init };
+    return { init, refreshThemePreview };
 })();

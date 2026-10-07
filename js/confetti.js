@@ -8,7 +8,8 @@ const Confetti = (() => {
     let animationId = null;
     let isRunning = false;
 
-    // Pastel confetti colors matching the theme
+    // Pastel confetti colors — fallback used when Themes isn't loaded.
+    // When available, the active theme's palette is read at launch time.
     const COLORS = [
         '#f4a8c8', // soft pink
         '#c8b8e8', // lavender
@@ -23,6 +24,18 @@ const Confetti = (() => {
     ];
 
     const SHAPES = ['rect', 'circle', 'strip'];
+
+    // Current palette for a launch; set in launch() from the active theme.
+    let palette = COLORS;
+
+    // Read the active theme's confetti palette, falling back to pastel.
+    function getPalette() {
+        if (typeof Themes !== 'undefined' && Themes.getConfettiColors) {
+            const colors = Themes.getConfettiColors();
+            if (colors && colors.length) return colors;
+        }
+        return COLORS;
+    }
 
     function init() {
         canvas = document.getElementById('confettiCanvas');
@@ -41,7 +54,7 @@ const Confetti = (() => {
      * Create a single confetti particle with randomized properties.
      */
     function createParticle() {
-        const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        const color = palette[Math.floor(Math.random() * palette.length)];
         const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
 
         return {
@@ -75,6 +88,7 @@ const Confetti = (() => {
 
         init();
         particles = [];
+        palette = getPalette();
 
         for (let i = 0; i < count; i++) {
             particles.push(createParticle());

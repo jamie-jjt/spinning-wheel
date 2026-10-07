@@ -37,6 +37,22 @@
         </svg>
     </div>
 
+    <!-- Fullscreen / focused view toggle -->
+    <button class="fullscreen-btn" id="fullscreenBtn" type="button" aria-label="Fullscreen wheel view" title="Fullscreen wheel view" aria-pressed="false">
+        <svg class="fs-icon fs-icon-expand" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+            <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+            <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+            <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+        <svg class="fs-icon fs-icon-collapse" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 3v3a2 2 0 0 1-2 2H3"/>
+            <path d="M21 8h-3a2 2 0 0 1-2-2V3"/>
+            <path d="M3 16h3a2 2 0 0 1 2 2v3"/>
+            <path d="M16 21v-3a2 2 0 0 1 2-2h3"/>
+        </svg>
+    </button>
+
     <main class="app-container">
         <h1 class="app-title">✨ Prize Wheel ✨</h1>
 
@@ -120,6 +136,13 @@
                         <input type="checkbox" id="winLoseToggle" class="toggle-input">
                         <label for="winLoseToggle" class="toggle-switch" aria-hidden="true"></label>
                     </div>
+                    <div class="setting-row">
+                        <label for="themeSelect">
+                            <span class="setting-label">Color Theme</span>
+                            <span class="setting-desc">Pick a preset palette for the whole app</span>
+                        </label>
+                        <select id="themeSelect" class="theme-select" aria-label="Color theme"></select>
+                    </div>
                 </div>
 
                 <!-- Segments section -->
@@ -143,9 +166,11 @@
 
     <script src="js/audio.js"></script>
     <script src="js/weighted.js"></script>
+    <script src="js/themes.js"></script>
     <script src="js/confetti.js"></script>
     <script src="js/wheel.js"></script>
     <script src="js/editor.js"></script>
     <script src="js/chibi.js"></script>
+    <script src="js/viewmodes.js"></script>
 </body>
 </html>
